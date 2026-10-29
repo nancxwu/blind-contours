@@ -8,21 +8,18 @@ RShape first;
 
 RPoint[] cur;
 RPoint[] target;
-float shiftCurX;
-float shiftCurY;
-float shiftNextX;
-float shiftNextY;
 int handInd = 0;
 int strokeA = 255;
 float ampLevel=1;
 color[] strokeHex = new color[3];
-color strokeColor = #ADFFC9;
+color strokeColor = #D6FFE4;
 
-float movement = 0.5;
+float movement = 0.2;
 float maxDist = 30.0;
 
 int startRecord = 0;
-int interval = 1500;
+int lastTransition;
+int interval = 5000;
 int duration = 12000;
 
 boolean start = true;
@@ -35,13 +32,10 @@ SoundFile song;
 SoundFile[] files = new SoundFile[numSounds];
 
 void setup(){
-  //size(1920, 1080, P2D);
   fullScreen(P2D);
   background(0);
   noCursor();
-  
   RG.init(this);
-  
   for (int i=0;i<numHands;i++){
     hands[i] = RG.loadShape("hands_"+(i+1)+".svg");
   }
@@ -65,42 +59,11 @@ void setup(){
     files[i] = new SoundFile(this, "noise" + (i+1) + ".mp3");
   }
   song = new SoundFile(this, "song.mp3");
-  song.play();
-  songStart = millis();
-  
-  
+  //song.play();
+  //songStart = millis();
 }
 
 void draw(){
-  /*
-  if (start){
-    blendMode(SUBTRACT);
-    fill(5.5);
-    rect(0, 0, width, height);
-    translate(width/2, height/2);
-    blendMode(NORMAL);
-    first.setFillAlpha(1);
-    first.setStroke(#F2DCDC);
-    first.skewX(0.0001);
-    if (millis() <58999+songStart){
-      float splitPos = map(millis(), 7565+songStart, 59000+songStart, 0, 1);
-      
-      RShape[] splitShapes = RG.split(first, splitPos);
-     
-      RG.shape(splitShapes[0]);
-    }
-    else {
-      if (millis() > 59875+songStart) {
-        start = false;
-        files[soundInd].play();
-        startRecord = millis();
-        intStart= millis();
-      }
-      RG.shape(first);
-    }
-  }
-  else {
-    */
     blendMode(SUBTRACT);
     fill(5.5);
     rect(0, 0, width, height);
@@ -108,8 +71,6 @@ void draw(){
     displayCur();
     moveShape();
     checkTime();
-  //}
-  //saveFrame("recording-#########.png");
 }
 
 float calcAngle(RPoint[] cur, RPoint[] target, int index){
@@ -153,37 +114,14 @@ void displayCur(){
 }
 
 void checkTime(){
-  if (millis()>316961+songStart){
-    strokeA-=0.05;
-    if (duration <5000){
-      duration = 5000;
-      movement = 0.75;
+  if (millis() > interval){
+    if(millis() - lastTransition > interval){
+      lastTransition = millis();
+      float randomMult = random(1,3);
+      interval = int(3000*randomMult);
+      movement = 0.7*randomMult;
       transitionNextHand();
       transitionNextSound();
-      strokeColor = #F2DCDC;
-    }
-    else if((millis()-startRecord)> duration){
-      startRecord = millis();
-      transitionNextHand();
-      transitionNextSound();
-      ampLevel -=0.34;
-      song.amp(ampLevel);
-      if (ampLevel<0){
-        song.stop();
-      }
-    }
-  }
-  else if((millis()-startRecord)> duration){
-    startRecord = millis();
-    int newInterval = round(map(millis(),intStart,317000+songStart,1500,1249));
-    int multiplier = round(map(millis(),intStart, 317000+songStart, 9,2)/2);
-    duration = multiplier*2*newInterval;
-    movement = map(millis(),intStart, 317000+songStart, 0.3,2.5);
-    //println(newInterval+" - "+duration+" - "+millis());
-    transitionNextHand();
-    transitionNextSound();
-    if (multiplier !=4){
-      strokeColor = strokeHex[multiplier-1];
     }
   }
 }
@@ -200,5 +138,5 @@ void transitionNextSound(){
 void transitionNextHand(){
   handInd = int(random(1,numHands+1))-1;
   target = hands[handInd].getPoints();
-  println(handInd+" : "+target.length);
+  //println(handInd+" : "+target.length);
 }
